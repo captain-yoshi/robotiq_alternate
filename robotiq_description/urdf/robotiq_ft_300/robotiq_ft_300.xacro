@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<robot name="robotiq_ft_300" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:include filename="$(find robotiq_description)/urdf/robotiq_ft_300/robotiq_ft_300.urdf.xacro" />
+  <xacro:robotiq_ft_300 prefix=""/>
+</robot>

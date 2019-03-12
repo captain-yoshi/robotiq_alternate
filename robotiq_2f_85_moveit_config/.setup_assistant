@@ -1,0 +1,8 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: robotiq_description
+    relative_path: urdf/robotiq_2f_85/robotiq_2f_85_gripper.xacro
+  SRDF:
+    relative_path: config/robotiq_2f_85_gripper.srdf
+  CONFIG:
+    generated_timestamp: 1456114391

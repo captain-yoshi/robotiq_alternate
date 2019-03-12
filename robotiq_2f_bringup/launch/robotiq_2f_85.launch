@@ -1,0 +1,37 @@
+<!-- Launch file for Segway platform startup -->
+
+<launch>
+    <arg name="comport" default="/dev/ttyUSB0"/>
+    <arg name="baud" default="115200"/>
+    <arg name="run_test" default="true"/>
+	        
+    <!-- Robotiq 85 ROS Driver -->
+    <node pkg="robotiq_2f_driver" type="robotiq_2f_driver" name="robotiq_2f_driver" respawn="true" output="screen">
+        <param name="num_grippers" value="1"/>
+        <param name="comport" value="$(arg comport)" />
+        <param name="baud" value="$(arg baud)" />
+    </node>
+
+    <!-- Gripper specific robot state publisher and parameters -->
+     <arg name="kinova_coupler" default="true"/>
+    
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find robotiq_2f_description)/urdf/robotiq_2f_85_gripper.xacro'" unless="$(arg kinova_coupler)"/>
+    
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find robotiq_2f_description)/urdf/kinova_robotiq_2f_85_gripper.xacro'" if="$(arg kinova_coupler)"/>
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" >
+        <param name="robot_description" value="robot_description"/>
+        <param name="publish_frequency" type="double" value="100.0" />
+    </node>
+
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+        <rosparam param="source_list">[/gripper/joint_states]</rosparam>
+    </node>
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find robotiq_2f_bringup)/rviz/robotiq_2f_85.rviz" />
+
+    <!-- Robotiq 85 ROS Test -->
+    <node pkg="robotiq_2f_driver" type="robotiq_2f_test" name="robotiq_2f_test" output="screen" if="$(arg run_test)">
+        <param name="num_grippers" value="1"/>
+    </node>
+
+</launch>

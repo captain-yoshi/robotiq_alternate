@@ -1,0 +1,8 @@
+controller_list:
+  - name: "gripper"
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: true
+    joints:
+      - left_outer_knuckle_joint
+
