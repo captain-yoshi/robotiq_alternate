@@ -1,0 +1,4 @@
+controller_list:
+  - name: fake_simple_gripper_controller
+    joints:
+      - simple_gripper_right_driver_joint
