@@ -1,7 +1,7 @@
 controller_list:
-  - name: "gripper"
-    action_ns: follow_joint_trajectory
-    type: FollowJointTrajectory
+  - name: "simple_gripper/joint_position_controller"
+    action_ns: gripper_cmd
+    type: GripperCommand
     default: true
     joints:
       - simple_gripper_right_driver_joint

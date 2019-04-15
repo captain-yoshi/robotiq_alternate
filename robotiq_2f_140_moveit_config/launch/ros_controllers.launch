@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- Load joint controller configurations from YAML file to parameter server -->
+  <rosparam file="$(find robotiq_2f_140_moveit_config)/config/ros_controllers.yaml" command="load"/>
+
+  <!-- Load the controllers -->
+  <node ns="simple_gripper" name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+    output="screen" args="joint_state_controller joint_position_controller"/>
+
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+ 	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+		<param name="use_gui" value="false"/>
+		<rosparam param="source_list">[/simple_gripper/joint_states]</rosparam>
+	</node>
+</launch>

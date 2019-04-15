@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<robot name="robotiq_grp_cpl_062" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:include filename="$(find robotiq_description)/urdf/robotiq_grp_cpl_062/robotiq_grp_cpl_062.urdf.xacro" />
+  <xacro:robotiq_grp_cpl_062 prefix=""/>
+</robot>

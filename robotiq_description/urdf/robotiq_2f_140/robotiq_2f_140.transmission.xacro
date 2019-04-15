@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:macro name="robotiq_2f_140_transmission" params="prefix">
+
+        <transmission name="${prefix}left_outer_knuckle_transmission">
+            <type>transmission_interface/SimpleTransmission</type>
+            <joint name="${prefix}left_outer_knuckle_joint">
+                <hardwareInterface>PositionJointInterface</hardwareInterface>
+            </joint>
+            <actuator name="${prefix}left_outer_knuckle_motor">
+                <mechanicalReduction>1</mechanicalReduction>
+            </actuator>
+        </transmission>
+
+        <!--
+        <gazebo>
+            <plugin filename="libroboticsgroup_gazebo_mimic_joint_plugin.so" name="${prefix}mimic_robotiq_2f_85_1">
+                <joint>${prefix}gripper_finger1_joint</joint>
+                <mimicJoint>${prefix}gripper_finger2_joint</mimicJoint>
+            </plugin>
+            <plugin filename="libroboticsgroup_gazebo_mimic_joint_plugin.so" name="${prefix}mimic_robotiq_2f_85_2">
+                <joint>${prefix}gripper_finger1_joint</joint>
+                <mimicJoint>${prefix}gripper_finger2_inner_knuckle_joint</mimicJoint>
+            </plugin>
+            <plugin filename="libroboticsgroup_gazebo_mimic_joint_plugin.so" name="${prefix}mimic_robotiq_2f_85_3">
+                <joint>${prefix}gripper_finger1_joint</joint>
+                <mimicJoint>${prefix}gripper_finger1_inner_knuckle_joint</mimicJoint>
+            </plugin>
+            <plugin filename="libroboticsgroup_gazebo_mimic_joint_plugin.so" name="${prefix}mimic_robotiq_2f_85_4">
+                <joint>${prefix}gripper_finger1_joint</joint>
+                <mimicJoint>${prefix}gripper_finger1_finger_tip_joint</mimicJoint>
+                <multiplier>-1.0</multiplier>
+                <offset>0.0</offset>
+            </plugin>
+            <plugin filename="libroboticsgroup_gazebo_mimic_joint_plugin.so" name="${prefix}mimic_robotiq_2f_85_5">
+                <joint>${prefix}gripper_finger1_joint</joint>
+                <mimicJoint>${prefix}gripper_finger2_finger_tip_joint</mimicJoint>
+                <multiplier>-1.0</multiplier>
+                <offset>0.0</offset>
+            </plugin>
+        </gazebo>
+        -->
+    </xacro:macro>
+
+</robot>
