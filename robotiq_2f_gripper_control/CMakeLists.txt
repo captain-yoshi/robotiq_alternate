@@ -2,9 +2,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(robotiq_2f_gripper_control)
 
-add_definitions (-std=c++11)
+#add_definitions (-std=c++11)
 
-find_package(catkin REQUIRED COMPONENTS robotiq_ethercat roscpp rospy message_generation std_msgs)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy message_generation )
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/")
 find_package(Modbus REQUIRED)
@@ -38,7 +38,7 @@ generate_messages()
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-    CATKIN_DEPENDS rospy message_runtime roscpp robotiq_ethercat std_msgs
+    CATKIN_DEPENDS rospy message_runtime roscpp
     INCLUDE_DIRS include
     DEPENDS modbus
 )
@@ -46,23 +46,20 @@ catkin_package(
 include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  ${robotiq_ethercat_INCLUDE_DIRS}
   ${MODBUS_INCLUDE_DIR}
 )
 
-add_executable(robotiq_2f_gripper_ethercat_node
-  src/robotiq_2f_gripper_control/robotiq_2f_gripper_ethercat_node.cpp
-  src/robotiq_2f_gripper_control/robotiq_2f_gripper_ethercat_client.cpp
+add_executable(robotiq_2f_gripper_serial_node
+  src/robotiq_2f_gripper_control/robotiq_2f_gripper_serial_node.cpp
+  src/robotiq_2f_gripper_control/robotiq_2f_gripper_serial_client.cpp
 )
 
-target_link_libraries(robotiq_2f_gripper_ethercat_node
-   ${robotiq_ethercat_LIBRARIES}
+target_link_libraries(robotiq_2f_gripper_serial_node
    ${catkin_LIBRARIES}
-   ${MODBUS_LIBRARIES}
-  
+   ${MODBUS_LIBRARIES}  
 )
 
-add_dependencies(robotiq_2f_gripper_ethercat_node robotiq_2f_gripper_control_generate_messages_cpp)
+add_dependencies(robotiq_2f_gripper_serial_node robotiq_2f_gripper_control_generate_messages_cpp)
 
 #############
 ## Install ##

@@ -2,13 +2,14 @@
 #define ROBOTIQ_2F_HW_USB____ROBOTIQ_2F_HW_USB_H
 
 #include <modbus.h>
+
+
+
 #include "ros/ros.h"
 #include <chrono>
 #include <thread>
 
 #include <control_toolbox/filters.h>
-
-//#include "robotiq_2f_hardware/robotiq_2f_hw.h"
 #include "robotiq_2f_gripper_control/robotiq_2f_usb_comm.h"
 
 #ifndef DEBUG
@@ -30,40 +31,27 @@ public:
 	{
 		// configure and connect to device
 		ctx_ptr_ = NULL;
-		//ctx_ptr_ = modbus_new_rtu(port_.c_str(), 115200, 'N', 8, 1);
-		ctx_ptr_ = modbus_new_rtu("/dev/ttyUSB0", 115200, 'N', 8, 1);
-		//ROS_WARN("Modbus %d", (uint32_t*)ctx_ptr_);
+		ctx_ptr_ = modbus_new_rtu(port_.c_str(), 115200, 'N', 8, 1);
+		// Max 15 char (Fix when libmodbus releases version 3.2.0)
 #if DEBUG
 		modbus_set_debug(ctx_ptr_, TRUE);
 #endif
-//ROS_WARN("1");
 		modbus_rtu_set_serial_mode(ctx_ptr_, MODBUS_RTU_RS485);
-//ROS_WARN("II");
 		modbus_set_slave(ctx_ptr_, server_id_);
-//ROS_WARN("4");
 		modbus_connect(ctx_ptr_);
-//ROS_WARN("6");
 
 		// init command structure with default values
 		rq_cmd_.buffer[0] = ACTIVATION_CMD[0];
 		rq_cmd_.buffer[1] = ACTIVATION_CMD[1];
 		rq_cmd_.buffer[2] = ACTIVATION_CMD[2];
-
+/*
 		// finally activate the device (handshake) and check
-
-//ROS_WARN("III %d", server_id_);
-//ROS_WARN("III %d", ACTIVATION_CMD[0]);
-
-//ROS_WARN("III %d", ACTIVATION_CMD[1]);
-//ROS_WARN("III %d", ACTIVATION_CMD[2]);
 		int ra = modbus_write_registers(ctx_ptr_, CMD_ADDR, 9, ACTIVATION_CMD);
-//ROS_WARN("III");
 		if(ra < 0)
 		{
 			std::cout << "Couldn't perform an activation on the USB device" << std::endl;
 			return false;
 		}
-		//ROS_WARN("NEAR");
 		// the sleep is needed because the ready flag is turned true before
 		// completing the initial movement after activation
 		std::this_thread::sleep_for(std::chrono::milliseconds(2000));
@@ -74,11 +62,8 @@ public:
 		while(!ready)
 		{
 			modbus_read_registers(ctx_ptr_, MSR_ADDR, 9, rq_msr_.buffer);
-			//getStatus(rq_msr_, ready);
-
 			u_act = (rq_msr_.buffer[0] & 0xFF00) >> 8;
 			ready = (u_act >> 0) & 0x01;
-			//ready = true;
 
 			timeout++;
 			if (timeout > 50)
@@ -89,7 +74,7 @@ public:
 			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
-//ROS_WARN("END");
+*/
 		return true;
 	}
 
@@ -117,6 +102,19 @@ public:
 	void readInput(uint16_t* buffer)
 	{
 		int rc = modbus_read_registers(ctx_ptr_, MSR_ADDR, 9, buffer);
+		if(rc < 0)
+		{
+			ROS_FATAL("Couldn't read the last state on the USB device");
+			exit(-1);
+			return;
+		}
+	}
+
+	void readOutput(uint16_t* buffer)
+	{
+		ROS_WARN("ISHH");
+		int rc = modbus_read_registers(ctx_ptr_, CMD_ADDR, 9, buffer);
+ROS_WARN("beta");
 		if(rc < 0)
 		{
 			ROS_FATAL("Couldn't read the last state on the USB device");

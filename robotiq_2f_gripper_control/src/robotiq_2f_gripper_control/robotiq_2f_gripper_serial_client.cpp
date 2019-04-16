@@ -1,15 +1,11 @@
-#include "robotiq_2f_gripper_control/robotiq_2f_gripper_ethercat_client.h"
-
-//#include "robotiq_ethercat/ethercat_manager.h"
+#include "robotiq_2f_gripper_control/robotiq_2f_gripper_serial_client.h"
 #include "robotiq_2f_gripper_control/robotiq_2f_hw_usb.hpp"
 
 // See Robotiq's documentation for the register mapping
-
-// An effort to keep the lines less than 100 char long
 namespace robotiq_2f_gripper_control
 {
 
-Robotiq2FGripperEtherCatClient::Robotiq2FGripperEtherCatClient(robotiq_2f_hardware::ROBOTIQ2FUSB& manager,
+Robotiq2FGripperSerialClient::Robotiq2FGripperSerialClient(robotiq_2f_hardware::ROBOTIQ2FUSB& manager,
                                                     int slave_no)
   : manager_(manager)
   , slave_no_(slave_no)
@@ -18,7 +14,7 @@ Robotiq2FGripperEtherCatClient::Robotiq2FGripperEtherCatClient(robotiq_2f_hardwa
 /*
   See support.robotiq.com -> manual for the register output meanings
 */
-void Robotiq2FGripperEtherCatClient::writeOutputs(const GripperOutput& output)
+void Robotiq2FGripperSerialClient::writeOutputs(const GripperOutput& output)
 {
   uint8_t map[6] = {0}; // array containing all 6 output registers
 
@@ -28,13 +24,6 @@ void Robotiq2FGripperEtherCatClient::writeOutputs(const GripperOutput& output)
   map[3] = output.rPR;
   map[4] = output.rSP;
   map[5] = output.rFR;
-
-/*
-  for (unsigned i = 0; i < 6; ++i)
-  {
-    manager_.write(slave_no_, i, map[i]);
-  }
-*/
 
   uint16_t buf_[9];
 
@@ -46,15 +35,10 @@ void Robotiq2FGripperEtherCatClient::writeOutputs(const GripperOutput& output)
 
 }
 
-Robotiq2FGripperEtherCatClient::GripperInput Robotiq2FGripperEtherCatClient::readInputs() const
+Robotiq2FGripperSerialClient::GripperInput Robotiq2FGripperSerialClient::readInputs() const
 {
   uint8_t map[6];
-/*
-  for (unsigned i = 0; i < 6; ++i)
-  {
-    map[i] = manager_.readInput(slave_no_, i);
-  }
-*/
+
 
   uint16_t buf_[9];
   manager_.readInput(buf_);
@@ -82,19 +66,15 @@ Robotiq2FGripperEtherCatClient::GripperInput Robotiq2FGripperEtherCatClient::rea
   return input;
 }
 
-Robotiq2FGripperEtherCatClient::GripperOutput Robotiq2FGripperEtherCatClient::readOutputs() const
+
+Robotiq2FGripperSerialClient::GripperOutput Robotiq2FGripperSerialClient::readOutputs() const
 {
   uint8_t map[6];
-/*
-  for (unsigned i = 0; i < 6; ++i)
-  {
-    map[i] = manager_.readOutput(slave_no_, i);
-  }
-*/
 
   uint16_t buf_[9];
-  manager_.readInput(buf_);
-
+ROS_WARN("test");
+  manager_.readOutput(buf_);
+ROS_WARN("alpha");
   
   map[0] = (uint8_t)((buf_[0] & 0xFF00) >> 8);
   map[1] = (uint8_t)(buf_[0] & 0x00FF);

@@ -3,7 +3,7 @@
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>
 
-#include "robotiq_2f_gripper_control/robotiq_2f_gripper_ethercat_client.h"
+#include "robotiq_2f_gripper_control/robotiq_2f_gripper_serial_client.h"
 #include <robotiq_2f_gripper_control/Robotiq2FGripper_robot_input.h>
 #include "robotiq_2f_gripper_control/robotiq_2f_hw_usb.hpp"
 #include "ros/ros.h"
@@ -18,8 +18,8 @@
 // sudo setcap cap_net_raw+ep <filename>
 
 
-void changeCallback(robotiq_2f_gripper_control::Robotiq2FGripperEtherCatClient& client,
-                    const robotiq_2f_gripper_control::Robotiq2FGripperEtherCatClient::GripperOutput::ConstPtr& msg)
+void changeCallback(robotiq_2f_gripper_control::Robotiq2FGripperSerialClient& client,
+                    const robotiq_2f_gripper_control::Robotiq2FGripperSerialClient::GripperOutput::ConstPtr& msg)
 {
   client.writeOutputs(*msg);
 }
@@ -31,31 +31,29 @@ int main(int argc, char** argv)
 {
   //using robotiq_ethercat::EtherCatManager;
   //using ROBOTIQ2FUSB;
-  using robotiq_2f_gripper_control::Robotiq2FGripperEtherCatClient;
+  using robotiq_2f_gripper_control::Robotiq2FGripperSerialClient;
 
-  typedef Robotiq2FGripperEtherCatClient::GripperOutput GripperOutput;
-  typedef Robotiq2FGripperEtherCatClient::GripperInput GripperInput;
+  typedef Robotiq2FGripperSerialClient::GripperOutput GripperOutput;
+  typedef Robotiq2FGripperSerialClient::GripperInput GripperInput;
 
   ros::init(argc, argv, "robotiq_2f_gripper_node");
   
   ros::NodeHandle nh ("~");
 
   // Parameter names
-  std::string ifname;
+  std::string port;
   int slave_no;
   bool activate;  
 
-  nh.param<std::string>("ifname", ifname, "/dev/ttyUSB0");
+  nh.param<std::string>("port", port, "/dev/ttyUSB0");
   nh.param<int>("slave_number", slave_no, 9);
   nh.param<bool>("activate", activate, true);
 
-  // Start ethercat manager
-  //EtherCatManager manager(ifname);
+  // Start Serial manager
   robotiq_2f_hardware::ROBOTIQ2FUSB manager;
 
-  manager.setPort(ifname);
+  manager.setPort(port);
   manager.setServerID(slave_no);
-
 
 
   if(!manager.init())
@@ -66,19 +64,53 @@ int main(int argc, char** argv)
 
 
   // register client 
-  Robotiq2FGripperEtherCatClient client(manager, slave_no);
+  Robotiq2FGripperSerialClient client(manager, slave_no);
 
+  // TODO delete
+  GripperOutput test;
+	
+  test = client.readOutputs();
+  ROS_WARN("rACT %d", test.rACT);
+  ROS_WARN("rGTO %d", test.rGTO);
+  ROS_WARN("rATR %d", test.rATR);
+  ROS_WARN("rPR %d", test.rPR);
+  ROS_WARN("rSP %d", test.rSP);
+  ROS_WARN("rFR %d", test.rFR);
+
+ GripperInput test_i;
+	
+  test_i = client.readInputs();
+  ROS_WARN("gACT %d", test_i.gACT);
+  ROS_WARN("gGTO %d", test_i.gGTO);
+  ROS_WARN("gSTA %d", test_i.gSTA);
+  ROS_WARN("gOBJ %d", test_i.gOBJ);
+  ROS_WARN("gFLT %d", test_i.gFLT);
+  ROS_WARN("gPR %d", test_i.gPR);
+  ROS_WARN("gPO %d", test_i.gPO);
+  ROS_WARN("gCU %d", test_i.gCU);
 
   // conditionally activate the gripper
   if (activate)
   {
     // Check to see if resetting is required? Or always reset?
+ROS_WARN("ACTIVATE");
     GripperOutput out;
     out.rACT = 0x1;
+out.rGTO = 0x1;
+    out.rPR = test_i.gPR;
 
     client.writeOutputs(out);
 
   }
+
+ test = client.readOutputs();
+  ROS_WARN("rACT %d", test.rACT);
+  ROS_WARN("rGTO %d", test.rGTO);
+  ROS_WARN("rATR %d", test.rATR);
+  ROS_WARN("rPR %d", test.rPR);
+  ROS_WARN("rSP %d", test.rSP);
+  ROS_WARN("rFR %d", test.rFR);
+
 
   // Sorry for the indentation, trying to keep it under 100 chars
   ros::Subscriber sub = 
@@ -91,7 +123,7 @@ int main(int argc, char** argv)
 
   while (ros::ok()) 
   {
-    Robotiq2FGripperEtherCatClient::GripperInput input = client.readInputs();
+    Robotiq2FGripperSerialClient::GripperInput input = client.readInputs();
     pub.publish(input);
     ros::spinOnce();
     rate.sleep();
