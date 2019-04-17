@@ -3,21 +3,44 @@
 
 #include <modbus.h>
 
-
-
 #include "ros/ros.h"
 #include <chrono>
 #include <thread>
 
-#include <control_toolbox/filters.h>
-#include "robotiq_2f_gripper_control/robotiq_2f_usb_comm.h"
 
 #ifndef DEBUG
 #define DEBUG 0
 #endif
 
+
+/*
+  Endieness (from Robotiq manual 2019):
+
+    Modbus RTU is a communication protocol based on a Big Endian byte order. Therefore, the 16-bit register addresses are
+    transmitted with the most significant byte first. However, the data port is in the case of Robotiq products based on the Little
+    Endian byte order. As such, the data parts of Modbus RTU messages are sent with the less significant byte first.
+*/
+
 namespace robotiq_2f_hardware
 {
+
+// this is fixed for the usb mode
+const int CMD_ADDR = 0x03E8;
+const int MSR_ADDR = 0x07D0;
+
+// the activation cmd also contains the default values for the GoTo command
+// speed in device at 100%, the decimation is done by the joint_trajectory controller
+// effort in device at 0
+const uint16_t ACTIVATION_CMD[3] = {(1 + (1 << 3) + (0 << 4)) << 8, 0x0000, (0xFF << 8) + 0xFF};
+// the reset command clears all values, clears all faults
+// and stops any current motion
+const uint16_t RESET_CMD[3] = {0x0, 0x0, 0x0};
+// the emergency stop command makes all other commands to stop, and perform a slow
+// openning of the gripper. A reset, and activation commands are required to re-enable
+// the gripper
+const uint16_t ESTOP_CMD[3] = {(1 + (0 << 3) + (1 << 4)) << 8, 0x0, 0x0};
+
+
 
 class ROBOTIQ2FUSB
 {
@@ -41,12 +64,12 @@ public:
 		modbus_connect(ctx_ptr_);
 
 		// init command structure with default values
-		rq_cmd_.buffer[0] = ACTIVATION_CMD[0];
-		rq_cmd_.buffer[1] = ACTIVATION_CMD[1];
-		rq_cmd_.buffer[2] = ACTIVATION_CMD[2];
-/*
+		buf_cmd_[0] = ACTIVATION_CMD[0];
+		buf_cmd_[1] = ACTIVATION_CMD[1];
+		buf_cmd_[2] = ACTIVATION_CMD[2];
+
 		// finally activate the device (handshake) and check
-		int ra = modbus_write_registers(ctx_ptr_, CMD_ADDR, 9, ACTIVATION_CMD);
+		int ra = modbus_write_registers(ctx_ptr_, CMD_ADDR, 3, ACTIVATION_CMD);
 		if(ra < 0)
 		{
 			std::cout << "Couldn't perform an activation on the USB device" << std::endl;
@@ -61,8 +84,8 @@ public:
 
 		while(!ready)
 		{
-			modbus_read_registers(ctx_ptr_, MSR_ADDR, 9, rq_msr_.buffer);
-			u_act = (rq_msr_.buffer[0] & 0xFF00) >> 8;
+			modbus_read_registers(ctx_ptr_, MSR_ADDR, 3, buf_msr_);
+			u_act = (buf_msr_[0] & 0xFF00) >> 8;
 			ready = (u_act >> 0) & 0x01;
 
 			timeout++;
@@ -74,17 +97,18 @@ public:
 			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
-*/
+
 		return true;
 	}
 
 	/**
-	 * @brief read
+	 * @brief readInput
 	 */
-/*
-	void read()
+	void readInput(uint8_t* map_in_)
 	{
-		int rc = modbus_read_registers(ctx_ptr_, MSR_ADDR, 9, rq_msr_.buffer);
+
+
+		int rc = modbus_read_registers(ctx_ptr_, MSR_ADDR, 3, buf_msr_);
 		if(rc < 0)
 		{
 			ROS_FATAL("Couldn't read the last state on the USB device");
@@ -92,28 +116,18 @@ public:
 			return;
 		}
 
-		joint_position_prev_.at(0) = joint_position_.at(0);
-		getPositionCurrent(rq_msr_, joint_position_.at(0), joint_effort_.at(0));
-		joint_velocity_.at(0) = filters::exponentialSmoothing((joint_position_.at(0)-joint_position_prev_.at(0))/0.001,
-															  joint_velocity_.at(0),
-															  0.8);
-	}
-*/
-	void readInput(uint16_t* buffer)
-	{
-		int rc = modbus_read_registers(ctx_ptr_, MSR_ADDR, 9, buffer);
-		if(rc < 0)
-		{
-			ROS_FATAL("Couldn't read the last state on the USB device");
-			exit(-1);
-			return;
-		}
+		map_in_[0] = (uint8_t)((buf_msr_[0] & 0xFF00) >> 8);
+  		map_in_[1] = (uint8_t)(buf_msr_[0] & 0x00FF);
+  		map_in_[2] = (uint8_t)((buf_msr_[1] & 0xFF00) >> 8);
+  		map_in_[3] = (uint8_t)(buf_msr_[1] & 0x00FF);
+  		map_in_[4] = (uint8_t)((buf_msr_[2] & 0xFF00) >> 8);
+  		map_in_[5] = (uint8_t)(buf_msr_[2] & 0x00FF);
 	}
 
-	void readOutput(uint16_t* buffer)
+	void readOutput(uint8_t* map_in_)
 	{
 		ROS_WARN("ISHH");
-		int rc = modbus_read_registers(ctx_ptr_, CMD_ADDR, 9, buffer);
+		int rc = modbus_read_registers(ctx_ptr_, CMD_ADDR, 3, buf_msr_);
 ROS_WARN("beta");
 		if(rc < 0)
 		{
@@ -121,30 +135,25 @@ ROS_WARN("beta");
 			exit(-1);
 			return;
 		}
+		map_in_[0] = (uint8_t)((buf_msr_[0] & 0xFF00) >> 8);
+  		map_in_[1] = (uint8_t)(buf_msr_[0] & 0x00FF);
+  		map_in_[2] = (uint8_t)((buf_msr_[1] & 0xFF00) >> 8);
+  		map_in_[3] = (uint8_t)(buf_msr_[1] & 0x00FF);
+  		map_in_[4] = (uint8_t)((buf_msr_[2] & 0xFF00) >> 8);
+  		map_in_[5] = (uint8_t)(buf_msr_[2] & 0x00FF);
 	}
 
 
 	/**
 	 * @brief write
 	 */
-/*
-	void write()
+	void write(uint8_t* map_out_)
 	{
-		setPositionEffort(joint_position_command_.at(0), 9.0, rq_cmd_);
+		buf_cmd_[0] = ((uint16_t)map_out_[0] << 8) | map_out_[1];
+  		buf_cmd_[1] = ((uint16_t)map_out_[2] << 8) | map_out_[3];
+  		buf_cmd_[2] = ((uint16_t)map_out_[4] << 8) | map_out_[5];
 
-		int rc = modbus_write_registers(ctx_ptr_, CMD_ADDR, 9, rq_cmd_.buffer);
-		if(rc < 0)
-		{
-			ROS_FATAL("Couldn't write the last command on the USB device");
-			exit(-1);
-		}
-	}
-*/
-	void write(uint16_t* buffer)
-	{
-		
-
-		int rc = modbus_write_registers(ctx_ptr_, CMD_ADDR, 9, buffer);
+		int rc = modbus_write_registers(ctx_ptr_, CMD_ADDR, 3, buf_cmd_);
 		if(rc < 0)
 		{
 			ROS_FATAL("Couldn't write the last command on the USB device");
@@ -157,7 +166,7 @@ ROS_WARN("beta");
 	 */
 	void close()
 	{
-		modbus_write_registers(ctx_ptr_, CMD_ADDR, 9, RESET_CMD);
+		modbus_write_registers(ctx_ptr_, CMD_ADDR, 3, RESET_CMD);
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 		modbus_close(ctx_ptr_);
 	}
@@ -167,14 +176,14 @@ ROS_WARN("beta");
 	 */
 	void reactivate()
 	{
-		int rs = modbus_write_registers(ctx_ptr_, CMD_ADDR, 9, RESET_CMD);
+		int rs = modbus_write_registers(ctx_ptr_, CMD_ADDR, 3, RESET_CMD);
 		if(rs < 0)
 		{
 			std::cout << "Couldn't perform a reset on the USB device" << std::endl;
 			exit(-2);
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-		int ra = modbus_write_registers(ctx_ptr_, CMD_ADDR, 9, ACTIVATION_CMD);
+		int ra = modbus_write_registers(ctx_ptr_, CMD_ADDR, 3, ACTIVATION_CMD);
 		if(ra < 0)
 		{
 			std::cout << "Couldn't perform an activation on the USB device" << std::endl;
@@ -188,7 +197,7 @@ ROS_WARN("beta");
 	 */
 	void estop()
 	{
-		modbus_write_registers(ctx_ptr_, CMD_ADDR, 9, ESTOP_CMD);
+		modbus_write_registers(ctx_ptr_, CMD_ADDR, 3, ESTOP_CMD);
 		std::this_thread::sleep_for(std::chrono::milliseconds(3000));
 	}
 
@@ -202,8 +211,9 @@ private:
 	std::string port_;
 	int server_id_;
 
-	robotiq_2f_hardware::rq_comm rq_cmd_;
-	robotiq_2f_hardware::rq_comm rq_msr_;
+	// Protocol uses 6 bytes for each register
+	uint16_t buf_cmd_[3];	// Register: ACTION REQUEST
+	uint16_t buf_msr_[3];	// Register: GRIPPER STATUS
 };
 
 } // robotiq_2f_hardware

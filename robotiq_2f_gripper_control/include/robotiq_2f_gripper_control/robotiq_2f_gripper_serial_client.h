@@ -59,6 +59,10 @@ public:
 private:
   robotiq_2f_hardware::ROBOTIQ2FUSB& manager_;
   const int slave_no_;
+  
+  mutable uint8_t map_input_[6];
+  uint8_t map_output_[6];
+
 };
 
 }

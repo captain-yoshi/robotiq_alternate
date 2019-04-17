@@ -3,6 +3,9 @@
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>
 
+#include "robotiq_2f_gripper_control/joint_state_publisher.hpp"
+
+
 #include "robotiq_2f_gripper_control/robotiq_2f_gripper_serial_client.h"
 #include <robotiq_2f_gripper_control/Robotiq2FGripper_robot_input.h>
 #include "robotiq_2f_gripper_control/robotiq_2f_hw_usb.hpp"
@@ -95,14 +98,16 @@ int main(int argc, char** argv)
     // Check to see if resetting is required? Or always reset?
 ROS_WARN("ACTIVATE");
     GripperOutput out;
-    out.rACT = 0x1;
-out.rGTO = 0x1;
-    out.rPR = test_i.gPR;
+    out.rACT = 0x0;
+    //out.rGTO = 0x1;
+    //out.rPR = test_i.gPR;
 
     client.writeOutputs(out);
-
+   out.rACT = 0x1;
+   //out.rGTO = 0x1;
+client.writeOutputs(out);
   }
-
+/*
  test = client.readOutputs();
   ROS_WARN("rACT %d", test.rACT);
   ROS_WARN("rGTO %d", test.rGTO);
@@ -110,13 +115,14 @@ out.rGTO = 0x1;
   ROS_WARN("rPR %d", test.rPR);
   ROS_WARN("rSP %d", test.rSP);
   ROS_WARN("rFR %d", test.rFR);
+*/
 
+  HectorJointStatePublisher jp(nh);
+  double pos;
 
-  // Sorry for the indentation, trying to keep it under 100 chars
   ros::Subscriber sub = 
         nh.subscribe<GripperOutput>("output", 1,
                                     boost::bind(changeCallback, boost::ref(client), _1));
-
   ros::Publisher pub = nh.advertise<GripperInput>("input", 100);
 
   ros::Rate rate(10); // 10 Hz
@@ -125,6 +131,11 @@ out.rGTO = 0x1;
   {
     Robotiq2FGripperSerialClient::GripperInput input = client.readInputs();
     pub.publish(input);
+
+    pos = (double)(input.gPO/255.0f)*0.8726;
+
+    jp.updateJointStates(pos);
+
     ros::spinOnce();
     rate.sleep();
   }

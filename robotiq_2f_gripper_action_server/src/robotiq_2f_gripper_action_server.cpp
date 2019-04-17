@@ -106,6 +106,7 @@ Robotiq2FGripperActionServer::Robotiq2FGripperActionServer(const std::string& na
 
 void Robotiq2FGripperActionServer::goalCB()
 {
+ROS_WARN("I----------------------------------");
   // Check to see if the gripper is in an active state where it can take goals
   if (current_reg_state_.gSTA != 0x3)
   {
@@ -189,6 +190,7 @@ void Robotiq2FGripperActionServer::issueActivation()
   ROS_INFO("Activating gripper for gripper action server: %s", action_name_.c_str());
   GripperOutput out;
   out.rACT = 0x1;
+  //out.rGTO = 0x1;
   // other params should be zero
   goal_reg_state_ = out;
   goal_pub_.publish(out);

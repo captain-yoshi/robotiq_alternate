@@ -4,7 +4,7 @@
   <arg name="activate" default="True" />
   <arg name="port" default="/dev/ttyUSB0" />
 
-  <node pkg="robotiq_2f_gripper_control" type="robotiq_2f_gripper_serial_node" name="gripper_server" output="screen">
+  <node pkg="robotiq_2f_gripper_control" type="robotiq_2f_gripper_serial_node" name="gripper" output="screen">
       <param name="port" type="str" value="$(arg port)" />
       <param name="activate" type="bool" value="$(arg activate)" />
       <param name="slave_number" type="int" value="$(arg slave_number)"/>
