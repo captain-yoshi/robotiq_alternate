@@ -9,7 +9,7 @@ class HectorJointStatePublisher{
 public:
   HectorJointStatePublisher(ros::NodeHandle nh)
   {
-    joint_name_vector.push_back("left_outer_knuckle_joint");
+    joint_name_vector.push_back("robotiq_2f_140_left_outer_knuckle_joint");
 
     out_joint_state_.name.resize(joint_name_vector.size());
     out_joint_state_.position.resize(joint_name_vector.size());

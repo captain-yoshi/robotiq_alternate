@@ -44,6 +44,13 @@ namespace
     double dist_per_tick = (params.max_gap_ - params.min_gap_) / 255;
     double eff_per_tick = (params.max_effort_ - params.min_effort_) / 255;
 
+    ROS_INFO("params.max_gap = %f", params.max_gap_);
+    ROS_INFO("params.min_gap = %f", params.min_gap_);
+    ROS_INFO("dist_per_tick = %f", dist_per_tick);
+    ROS_INFO("eff_per_tick = %f", eff_per_tick);
+    ROS_INFO("goal.command.position = %f", goal.command.position);
+
+
     result.rPR = static_cast<uint8_t>((params.max_gap_ - goal.command.position) / dist_per_tick);
     result.rFR = static_cast<uint8_t>((goal.command.max_effort - params.min_effort_) / eff_per_tick);
 

@@ -118,23 +118,29 @@ client.writeOutputs(out);
 */
 
   HectorJointStatePublisher jp(nh);
-  double pos;
+  double j_pos;
+  double max_joint_pos = 0.77;
+  // The max position returned from the encoder is about 230/255 for 2f-140 with default fingertip pad and closed to rPR=255
+  double fake_max_joint_pos = max_joint_pos*255/230;
 
   ros::Subscriber sub = 
         nh.subscribe<GripperOutput>("output", 1,
                                     boost::bind(changeCallback, boost::ref(client), _1));
   ros::Publisher pub = nh.advertise<GripperInput>("input", 100);
 
-  ros::Rate rate(10); // 10 Hz
+  ros::Rate rate(20); // 10 Hz
 
   while (ros::ok()) 
   {
     Robotiq2FGripperSerialClient::GripperInput input = client.readInputs();
     pub.publish(input);
 
-    pos = (double)(input.gPO/255.0f)*0.8726;
+    j_pos = (double)(input.gPO/255.0f)*fake_max_joint_pos;
+    if(j_pos > max_joint_pos) {
+        j_pos = max_joint_pos;
+    }
 
-    jp.updateJointStates(pos);
+    jp.updateJointStates(j_pos);
 
     ros::spinOnce();
     rate.sleep();
