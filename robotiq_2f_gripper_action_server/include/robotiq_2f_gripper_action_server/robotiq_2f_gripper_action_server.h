@@ -41,6 +41,9 @@ struct Robotiq2FGripperParams
   double max_gap_;
   double min_effort_; // N / (Nm)
   double max_effort_;
+  int32_t pos_offset;		// Offset to make sure that the object is holding  
+  int16_t encoder_offset; 	// Encoder offset for validating position when an object is hold
+  uint16_t pos_tol;		// Tolerance for validating position when an object is hold
 };
 
 /**
@@ -75,7 +78,7 @@ private:
    * to/from register states understood by gripper itself. Different
    * for different models/generations of Robotiq grippers */
   Robotiq2FGripperParams gripper_params_;
-
+  
   std::string action_name_;
 };
 
