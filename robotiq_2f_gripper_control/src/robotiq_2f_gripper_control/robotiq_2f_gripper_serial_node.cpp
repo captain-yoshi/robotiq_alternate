@@ -121,7 +121,7 @@ client.writeOutputs(out);
   double j_pos;
   double max_joint_pos = 0.792;
   // The max position returned from the encoder is about 230/255 for 2f-140 with default fingertip pad and closed to rPR=255
-  double fake_max_joint_pos = max_joint_pos*255/(228-3);
+  //double fake_max_joint_pos = max_joint_pos*255/(228-3);
 
   ros::Subscriber sub = 
         nh.subscribe<GripperOutput>("output", 1,
@@ -134,7 +134,8 @@ client.writeOutputs(out);
   {
     Robotiq2FGripperSerialClient::GripperInput input = client.readInputs();
     pub.publish(input);
-
+    
+    // TODO validate when gPO = 3 (fully opened)
     j_pos = (double)(input.gPO/228.0f)*max_joint_pos;
     if(j_pos > max_joint_pos) {
         j_pos = max_joint_pos;

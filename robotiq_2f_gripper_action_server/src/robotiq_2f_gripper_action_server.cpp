@@ -25,8 +25,7 @@ namespace
     result.rACT = 0x1; // active gripper
     result.rGTO = 0x1; // go to position
     result.rATR = 0x0; // No emergency release
-    result.rSP = 128; // Middle ground speed
-    
+    result.rSP  = 128; // Middle ground speed
 
     if (goal.command.position > params.max_gap_ || goal.command.position < params.min_gap_)
     {
@@ -34,80 +33,84 @@ namespace
                params.min_gap_, params.max_gap_, goal.command.position);
       throw BadArgumentsError();
     }
-    
     if (goal.command.max_effort < params.min_effort_ || goal.command.max_effort > params.max_effort_)
     {
       ROS_WARN("Goal gripper effort out of range (%f to %f N): %f N",
                params.min_effort_, params.max_effort_, goal.command.max_effort);
       throw BadArgumentsError();
     }
+    // For futur use
+    params.goal_cmd_pos = goal.command.position;
 
-    //double dist_per_tick = (params.max_gap_ - params.min_gap_) / 255;
+
+    // Gripper has quasi-linear position (function determined by testing different position)
+    if (goal.command.position <= 0.1) {
+      result.rPR = static_cast<uint8_t>(-1479.31 * goal.command.position + 226.84558);
+      params.pos_nl_offset = 0;
+    }
+    else if (goal.command.position >= 0.137) {  // Non-linear portition
+      result.rPR = 3;
+      params.pos_nl_offset = 10;
+    }
+    else {
+      result.rPR = static_cast<uint8_t>(-1661.8310875 * goal.command.position + 245.66409);
+      params.pos_nl_offset = 0;
+    }
+
     double eff_per_tick = (params.max_effort_ - params.min_effort_) / 255;
-
-
-    result.rPR = static_cast<uint8_t>(-1526.308005*goal.command.position+228.260379);
-    //result.rPR = static_cast<uint8_t>((params.max_gap_ - goal.command.position) / dist_per_tick);
     result.rFR = static_cast<uint8_t>((goal.command.max_effort - params.min_effort_) / eff_per_tick);
 
-	/*  
-    if (result.rPR < 3) {
-        result.rPR = 3;
-    }
-*/
-    int32_t goal_cmd_pos_offset = 10;	// Needed so that it never reaches the original goal
-    params.encoder_offset = 0; 
-    //params.pos_tol = 2;		// Tolerance for position feedback
 
+    // In force control (fc) when goal.command.max_effort > 0
+    // In position control (pc) when goal.command.max_effort == 0
+    int32_t goal_cmd_pos_offset = 255;  // Needed so that it never reaches the original goal
+
+    // Tolerance for position so that a GripperCommand succeeds (Used in fc & pc)
     uint16_t pos_tol_high = 5;
     uint16_t pos_tol_low  = 2;
 
-
     // Closing gripper
-    if (curr_reg_state_gPO < result.rPR) {
-        if (result.rPR + goal_cmd_pos_offset > 255) {
-	        params.pos_offset = 255 - result.rPR;
-	} else {
-        	params.pos_offset = goal_cmd_pos_offset;
-	}
-        params.pos_tol_open   = pos_tol_high;
-        params.pos_tol_closed = pos_tol_low;
-    } 
+    if (curr_reg_state_gPO <= result.rPR) {
+      if (result.rPR + goal_cmd_pos_offset > 255) {
+        params.pos_offset = 255 - result.rPR;
+      }
+      else {
+        params.pos_offset = goal_cmd_pos_offset;
+      }
+      params.pos_tol_open   = pos_tol_high;
+      params.pos_tol_closed = pos_tol_low;
+    }
     // Opening gripper
     else if (curr_reg_state_gPO > result.rPR) {
-        if (result.rPR - goal_cmd_pos_offset < 0) {
-	        params.pos_offset = 0 - result.rPR;
-	} else {
-        	params.pos_offset = -goal_cmd_pos_offset;
-	}
-        params.pos_tol_open   = pos_tol_low;
-        params.pos_tol_closed = pos_tol_high;
-    } 
+      if (result.rPR - goal_cmd_pos_offset < 0) {
+        params.pos_offset = 0 - result.rPR;
+      }
+      else {
+        params.pos_offset = -goal_cmd_pos_offset;
+      }
+      params.pos_tol_open   = pos_tol_low;
+      params.pos_tol_closed = pos_tol_high;
+    }
     else {
         params.pos_offset = 0;
     }
 
-    // In this mode
+    // No offsets in fc
     if (result.rFR == 0) {
-	params.pos_offset = 0;
+      params.pos_offset = 0;
+      params.pos_nl_offset = 0;
     }
 
     result.rPR = static_cast<uint8_t>(result.rPR + params.pos_offset);
-    
-
-
-
 
     ROS_INFO("params.max_gap = %f", params.max_gap_);
     ROS_INFO("params.min_gap = %f", params.min_gap_);
     ROS_INFO("params.min_effort_ = %f", params.min_effort_);
     ROS_INFO("params.max_effort_ = %f", params.max_effort_);
-    //ROS_INFO("dist_per_tick = %f", dist_per_tick);
     ROS_INFO("eff_per_tick = %f", eff_per_tick);
     ROS_INFO("goal.command.position = %f", goal.command.position);
     ROS_INFO("cmd_pos_offset = %d", params.pos_offset);
 
-  
     ROS_INFO("Setting goal position register to %hhu", result.rPR);
 
     return result;
@@ -236,34 +239,30 @@ void Robotiq2FGripperActionServer::analysisCB(const GripperInput::ConstPtr& msg)
     ROS_INFO("gPO = %d", current_reg_state_.gPO);
     ROS_INFO("rPR = %d", goal_reg_state_.rPR );
     ROS_INFO("pos_offset = %d", gripper_params_.pos_offset );
-               double max_tol = ((goal_reg_state_.rPR - gripper_params_.pos_offset + gripper_params_.encoder_offset - gripper_params_.pos_tol_closed)-228.260379) /-1526.308005;
-               double min_tol = ((goal_reg_state_.rPR - gripper_params_.pos_offset + gripper_params_.encoder_offset + gripper_params_.pos_tol_open)-228.260379) /-1526.308005;
-               double curr_pos = (current_reg_state_.gPO - 228.260379) /-1526.308005;
 
+    // TODO change because we have 3 functions depending on the position
+    double max_tol = ((goal_reg_state_.rPR - gripper_params_.pos_offset + gripper_params_.pos_nl_offset - gripper_params_.pos_tol_closed)-228.260379) /-1526.308005;
+    double min_tol = ((goal_reg_state_.rPR - gripper_params_.pos_offset + gripper_params_.pos_nl_offset + gripper_params_.pos_tol_open)-228.260379) /-1526.308005;
+    double curr_pos = (current_reg_state_.gPO - 228.260379) /-1526.308005;
 
-        // Enable thin detection object not detech by robotiq
-	if (current_reg_state_.gPO >= (goal_reg_state_.rPR - gripper_params_.pos_offset + gripper_params_.encoder_offset - gripper_params_.pos_tol_closed) && 
-            current_reg_state_.gPO <= (goal_reg_state_.rPR - gripper_params_.pos_offset + gripper_params_.encoder_offset + gripper_params_.pos_tol_open))  
-        {
-		ROS_INFO("%s succeeded", action_name_.c_str());
-                ROS_INFO("Gripper is between %f and %f meters. Current position is %f meters.", min_tol, max_tol, curr_pos);
-		as_.setSucceeded(registerStateToResult(current_reg_state_,
-		                                       gripper_params_,
-		                                       goal_reg_state_.rPR));
-
-	}
-        // Throw error because
-        else {
-
-
- 
-
-		ROS_WARN("Gripper position MUST be between %f and %f meters. Current position is %f meters.", min_tol, max_tol, curr_pos);
-		as_.setAborted(registerStateToResult(current_reg_state_,
-		                                     gripper_params_,
-		                                     goal_reg_state_.rPR));
-	}
-
+    // Enable thin detection object not detect by robotiq (No need to check against gOBJ = 0x03)
+    if (static_cast<int16_t>(current_reg_state_.gPO) >= (static_cast<int16_t>(goal_reg_state_.rPR) - gripper_params_.pos_offset + gripper_params_.pos_nl_offset - gripper_params_.pos_tol_closed) && 
+        static_cast<int16_t>(current_reg_state_.gPO) <= (static_cast<int16_t>(goal_reg_state_.rPR) - gripper_params_.pos_offset + gripper_params_.pos_nl_offset + gripper_params_.pos_tol_open))  
+    {
+      ROS_INFO("%s succeeded", action_name_.c_str());
+      ROS_INFO("Gripper is between %f and %f meters. Current position is %f meters.", min_tol, max_tol, curr_pos);
+      as_.setSucceeded(registerStateToResult(current_reg_state_,
+                                             gripper_params_,
+                                             goal_reg_state_.rPR));
+    }
+    // Throw error because
+    else {
+      ROS_WARN("gPO = %d, rPR = %d, Compare1 = %d, Compare2 = %d", current_reg_state_.gPO, goal_reg_state_.rPR, (goal_reg_state_.rPR - gripper_params_.pos_offset + gripper_params_.pos_nl_offset - gripper_params_.pos_tol_closed), (goal_reg_state_.rPR - gripper_params_.pos_offset + gripper_params_.pos_nl_offset + gripper_params_.pos_tol_open));
+      ROS_WARN("Gripper position MUST be between %f and %f meters. Current position is %f meters.", min_tol, max_tol, curr_pos);
+      as_.setAborted(registerStateToResult(current_reg_state_,
+                                           gripper_params_,
+                                           goal_reg_state_.rPR));
+    }
   }
   else
   {

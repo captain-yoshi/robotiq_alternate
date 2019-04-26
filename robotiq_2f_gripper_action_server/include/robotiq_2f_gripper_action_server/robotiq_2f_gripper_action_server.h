@@ -42,9 +42,10 @@ struct Robotiq2FGripperParams
   double min_effort_; // N / (Nm)
   double max_effort_;
   int32_t pos_offset;		// Offset to make sure that the object is holding  
-  int32_t encoder_offset; 	// Encoder offset for validating position when an object is hold
-  uint32_t pos_tol_open;		// Tolerance for validating position when an object is hold
-  uint32_t pos_tol_closed;
+  int32_t pos_nl_offset; 	// Position offset when in non linear area
+  int32_t pos_tol_open;		// Tolerance for validating position when an object is hold
+  int32_t pos_tol_closed;
+  double goal_cmd_pos;
 };
 
 /**
