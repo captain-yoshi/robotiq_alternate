@@ -135,11 +135,28 @@ client.writeOutputs(out);
     Robotiq2FGripperSerialClient::GripperInput input = client.readInputs();
     pub.publish(input);
     
+    // TODO add functions because same numbers are in robotiq_2f_gripper_action_server.cpp
+    if (input.gPO <= 14) { 
+ 	j_pos = 0;
+    }
+    else if (input.gPO <= 77) {  
+	j_pos = ((double)input.gPO - 245.66409)/-1661.8310875;
+        j_pos = (max_joint_pos*(j_pos-0.14))/-0.14;
+    }
+    else { 
+	j_pos = ((double)input.gPO - 226.84558)/-1479.31;
+        j_pos = (max_joint_pos*(j_pos-0.14))/-0.14;
+    }
+
+
     // TODO validate when gPO = 3 (fully opened)
-    j_pos = (double)(input.gPO/228.0f)*max_joint_pos;
+    //j_pos = (double)((input.gPO - 3)/225.0f)*max_joint_pos;
     if(j_pos > max_joint_pos) {
         j_pos = max_joint_pos;
     }
+	else if (j_pos < 0) {
+j_pos = 0;
+}
 
     jp.updateJointStates(j_pos);
 

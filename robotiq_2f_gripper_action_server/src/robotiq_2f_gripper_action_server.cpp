@@ -42,18 +42,21 @@ namespace
     // For futur use
     params.goal_cmd_pos = goal.command.position;
 
+    // Change joint position (rad) to gripper gap size (m)
+    double goal_gap_size = 0.14 - (goal.command.position *  0.14 / params.max_gap_);
+
 
     // Gripper has quasi-linear position (function determined by testing different position)
-    if (goal.command.position <= 0.1) {
-      result.rPR = static_cast<uint8_t>(-1479.31 * goal.command.position + 226.84558);
+    if (goal_gap_size <= 0.1) { //78 to 226
+      result.rPR = static_cast<uint8_t>(-1479.31 * goal_gap_size + 226.84558);
       params.pos_nl_offset = 0;
     }
-    else if (goal.command.position >= 0.137) {  // Non-linear portition
+    else if (goal_gap_size >= 0.137) {  // Non-linear portition
       result.rPR = 3;
       params.pos_nl_offset = 10;
     }
-    else {
-      result.rPR = static_cast<uint8_t>(-1661.8310875 * goal.command.position + 245.66409);
+    else { // 15 to 77
+      result.rPR = static_cast<uint8_t>(-1661.8310875 * goal_gap_size + 245.66409);
       params.pos_nl_offset = 0;
     }
 
@@ -102,17 +105,18 @@ namespace
     }
 
     result.rPR = static_cast<uint8_t>(result.rPR + params.pos_offset);
-
+/*
     ROS_INFO("params.max_gap = %f", params.max_gap_);
     ROS_INFO("params.min_gap = %f", params.min_gap_);
     ROS_INFO("params.min_effort_ = %f", params.min_effort_);
     ROS_INFO("params.max_effort_ = %f", params.max_effort_);
     ROS_INFO("eff_per_tick = %f", eff_per_tick);
     ROS_INFO("goal.command.position = %f", goal.command.position);
+    ROS_INFO("goal.command.max_effort = %f", goal.command.max_effort);
     ROS_INFO("cmd_pos_offset = %d", params.pos_offset);
 
     ROS_INFO("Setting goal position register to %hhu", result.rPR);
-
+*/
     return result;
   }
 
@@ -171,7 +175,6 @@ Robotiq2FGripperActionServer::Robotiq2FGripperActionServer(const std::string& na
 
 void Robotiq2FGripperActionServer::goalCB()
 {
-ROS_WARN("I----------------------------------");
   // Check to see if the gripper is in an active state where it can take goals
   if (current_reg_state_.gSTA != 0x3)
   {
@@ -236,10 +239,11 @@ void Robotiq2FGripperActionServer::analysisCB(const GripperInput::ConstPtr& msg)
   {
     // If commanded to move and if at a goal state and if the position request matches the echo'd PR, we're
     // done with a move
+/*
     ROS_INFO("gPO = %d", current_reg_state_.gPO);
     ROS_INFO("rPR = %d", goal_reg_state_.rPR );
     ROS_INFO("pos_offset = %d", gripper_params_.pos_offset );
-
+*/
     // TODO change because we have 3 functions depending on the position
     double max_tol = ((goal_reg_state_.rPR - gripper_params_.pos_offset + gripper_params_.pos_nl_offset - gripper_params_.pos_tol_closed)-228.260379) /-1526.308005;
     double min_tol = ((goal_reg_state_.rPR - gripper_params_.pos_offset + gripper_params_.pos_nl_offset + gripper_params_.pos_tol_open)-228.260379) /-1526.308005;
@@ -249,8 +253,10 @@ void Robotiq2FGripperActionServer::analysisCB(const GripperInput::ConstPtr& msg)
     if (static_cast<int16_t>(current_reg_state_.gPO) >= (static_cast<int16_t>(goal_reg_state_.rPR) - gripper_params_.pos_offset + gripper_params_.pos_nl_offset - gripper_params_.pos_tol_closed) && 
         static_cast<int16_t>(current_reg_state_.gPO) <= (static_cast<int16_t>(goal_reg_state_.rPR) - gripper_params_.pos_offset + gripper_params_.pos_nl_offset + gripper_params_.pos_tol_open))  
     {
+/*
       ROS_INFO("%s succeeded", action_name_.c_str());
       ROS_INFO("Gripper is between %f and %f meters. Current position is %f meters.", min_tol, max_tol, curr_pos);
+*/
       as_.setSucceeded(registerStateToResult(current_reg_state_,
                                              gripper_params_,
                                              goal_reg_state_.rPR));
@@ -264,6 +270,7 @@ void Robotiq2FGripperActionServer::analysisCB(const GripperInput::ConstPtr& msg)
                                            goal_reg_state_.rPR));
     }
   }
+
   else
   {
     // Publish feedback
@@ -271,6 +278,8 @@ void Robotiq2FGripperActionServer::analysisCB(const GripperInput::ConstPtr& msg)
                                                 gripper_params_,
                                                 goal_reg_state_.rPR));
   }
+
+  
 }
 
 void Robotiq2FGripperActionServer::issueActivation()

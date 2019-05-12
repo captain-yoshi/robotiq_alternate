@@ -15,7 +15,7 @@ public:
     out_joint_state_.position.resize(joint_name_vector.size());
 
 
-    joint_state_pub_ = nh.advertise<sensor_msgs::JointState>("/joint_states",5);
+    joint_state_pub_ = nh.advertise<sensor_msgs::JointState>("/robotiq_2f_140/joint_states",1);
 
     for (size_t i = 0; i < joint_name_vector.size(); ++i){
       //dyn_joint_state_subs_[i] = nh.subscribe("/" + joint_name_vector[i] + "/state", 1, &HectorJointStatePublisher::dynamixelJointStateCallback, this);
