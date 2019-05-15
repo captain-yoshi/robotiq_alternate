@@ -4,7 +4,7 @@
  */
 
 #include "robotiq_2f_gripper_action_server/robotiq_2f_gripper_action_server.h"
-
+#include <math.h>  
 // To keep the fully qualified names managable
 
 //Anonymous namespaces are file local -> sort of like global static objects
@@ -43,8 +43,11 @@ namespace
     params.goal_cmd_pos = goal.command.position;
 
     // Change joint position (rad) to gripper gap size (m)
-    double goal_gap_size = 0.14 - (goal.command.position *  0.14 / params.max_gap_);
+    //double goal_gap_size = 0.14 - (goal.command.position *  0.14 / params.max_gap_);
 
+    // Change joint position (rad) to gripper gap size (m) (Based on CAD)
+    double theta_offset = acos(0.06691/0.1);
+    double goal_gap_size = 2 * (0.1 * cos(goal.command.position + theta_offset) - 0.00735 +0.0127);
 
     // Gripper has quasi-linear position (function determined by testing different position)
     if (goal_gap_size <= 0.1) { //78 to 226

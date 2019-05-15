@@ -172,6 +172,12 @@
   </link>
 </xacro:macro>
 
+
+<xacro:macro name="fingerpad" params="prefix fingerprefix">
+  <link name="${prefix}${fingerprefix}fingerpad"/>
+</xacro:macro>
+
+
 <xacro:macro name="inner_knuckle_joint" params="prefix fingerprefix reflect">
   <joint name="${prefix}${fingerprefix}inner_knuckle_joint" type="revolute">
     <origin xyz="0.06942 ${reflect * -0.0127} 0" rpy="${(reflect -1)*0} ${(reflect -1)*pi/2} ${(reflect -1)*pi/2}" />
@@ -233,7 +239,13 @@
   </joint>
 </xacro:macro>
 
-
+<xacro:macro name="fingerpad_joint" params="prefix fingerprefix">
+  <joint name="${prefix}${fingerprefix}fingerpad_joint" type="fixed">
+    <origin xyz="0 0.0068 0" rpy="0 0 0" />
+    <parent link="${prefix}${fingerprefix}fingertip" />
+    <child link="${prefix}${fingerprefix}fingerpad" />
+  </joint>
+</xacro:macro>
 <xacro:macro name="robotiq_2f_140" params="prefix">
 
 
@@ -281,12 +293,14 @@
   <xacro:outer_finger prefix="${prefix}" fingerprefix="left_" />
   <xacro:inner_finger prefix="${prefix}" fingerprefix="left_" />
   <xacro:fingertip prefix="${prefix}" fingerprefix="left_" />
+  <xacro:fingerpad prefix="${prefix}" fingerprefix="left_" />
 
   <xacro:left_outer_knuckle_joint prefix="${prefix}" />
   <xacro:inner_knuckle_joint prefix="${prefix}" fingerprefix="left_" reflect="-1" />
   <xacro:outer_finger_joint prefix="${prefix}" fingerprefix="left_" />
   <xacro:inner_finger_joint prefix="${prefix}" fingerprefix="left_" />
   <xacro:fingertip_joint prefix="${prefix}" fingerprefix="left_" />
+  <xacro:fingerpad_joint prefix="${prefix}" fingerprefix="left_" />
 
   <!-- Right gripper link/joints -->
   <xacro:outer_knuckle prefix="${prefix}" fingerprefix="right_" />
@@ -294,13 +308,14 @@
   <xacro:inner_knuckle prefix="${prefix}" fingerprefix="right_" />
   <xacro:inner_finger prefix="${prefix}" fingerprefix="right_" />
   <xacro:fingertip prefix="${prefix}" fingerprefix="right_" />
+  <xacro:fingerpad prefix="${prefix}" fingerprefix="right_" />
 
   <xacro:right_outer_knuckle_joint prefix="${prefix}" />
   <xacro:outer_finger_joint prefix="${prefix}" fingerprefix="right_" />
   <xacro:inner_knuckle_joint prefix="${prefix}" fingerprefix="right_" reflect="1" />
   <xacro:inner_finger_joint prefix="${prefix}" fingerprefix="right_" />
   <xacro:fingertip_joint prefix="${prefix}" fingerprefix="right_" />
-
+  <xacro:fingerpad_joint prefix="${prefix}" fingerprefix="right_" />
 
 
 

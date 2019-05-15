@@ -4,7 +4,7 @@
 #include <boost/ref.hpp>
 
 #include "robotiq_2f_gripper_control/joint_state_publisher.hpp"
-
+#include <math.h>  
 
 #include "robotiq_2f_gripper_control/robotiq_2f_gripper_serial_client.h"
 #include <robotiq_2f_gripper_control/Robotiq2FGripper_robot_input.h>
@@ -119,7 +119,9 @@ client.writeOutputs(out);
 
   HectorJointStatePublisher jp(nh);
   double j_pos;
-  double max_joint_pos = 0.792;
+  double max_joint_pos = 0.786522656;
+  double max_gap = 0.140;
+  double theta_offset = acos(0.06691/0.1);
   // The max position returned from the encoder is about 230/255 for 2f-140 with default fingertip pad and closed to rPR=255
   //double fake_max_joint_pos = max_joint_pos*255/(228-3);
 
@@ -140,13 +142,14 @@ client.writeOutputs(out);
  	j_pos = 0;
     }
     else if (input.gPO <= 77) {  
-	j_pos = ((double)input.gPO - 245.66409)/-1661.8310875;
-        j_pos = (max_joint_pos*(j_pos-0.14))/-0.14;
+	j_pos = ((double)input.gPO - 245.66409)/-1661.8310875; // gives current gap
+        j_pos = acos((j_pos/2 + 0.00735 - 0.0127)/0.1) - theta_offset;
     }
     else { 
 	j_pos = ((double)input.gPO - 226.84558)/-1479.31;
-        j_pos = (max_joint_pos*(j_pos-0.14))/-0.14;
+        j_pos = acos((j_pos/2 + 0.00735 - 0.0127)/0.1) - theta_offset;  // TODO add method in another file
     }
+
 
 
     // TODO validate when gPO = 3 (fully opened)
