@@ -49,9 +49,18 @@ include_directories(
   ${MODBUS_INCLUDE_DIR}
 )
 
+
+
+
+
+
+
+
+
 add_executable(robotiq_2f_gripper_serial_node
   src/robotiq_2f_gripper_control/robotiq_2f_gripper_serial_node.cpp
   src/robotiq_2f_gripper_control/robotiq_2f_gripper_serial_client.cpp
+  
 )
 
 target_link_libraries(robotiq_2f_gripper_serial_node
@@ -61,6 +70,18 @@ target_link_libraries(robotiq_2f_gripper_serial_node
 
 add_dependencies(robotiq_2f_gripper_serial_node robotiq_2f_gripper_control_generate_messages_cpp)
 
+
+# Simulation node
+add_executable(robotiq_2f_gripper_simulation_node
+  src/robotiq_2f_gripper_control/robotiq_2f_gripper_simulation_node.cpp
+)
+
+target_link_libraries(robotiq_2f_gripper_simulation_node
+   ${catkin_LIBRARIES}
+   ${MODBUS_LIBRARIES}  
+)
+
+add_dependencies(robotiq_2f_gripper_simulation_node robotiq_2f_gripper_control_generate_messages_cpp)
 #############
 ## Install ##
 #############

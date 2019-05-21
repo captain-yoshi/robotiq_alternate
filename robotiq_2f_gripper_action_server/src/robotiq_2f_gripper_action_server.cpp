@@ -64,16 +64,25 @@ namespace
     }
 
     double eff_per_tick = (params.max_effort_ - params.min_effort_) / 255;
-    result.rFR = static_cast<uint8_t>((goal.command.max_effort - params.min_effort_) / eff_per_tick);
+
+    // TODO remove when fixed in MTC
+    result.rFR = static_cast<uint8_t>((50 - params.min_effort_) / eff_per_tick);
+    // TODO uncomment when fixed in MTC
+    //result.rFR = static_cast<uint8_t>((goal.command.max_effort - params.min_effort_) / eff_per_tick);
 
 
     // In force control (fc) when goal.command.max_effort > 0
     // In position control (pc) when goal.command.max_effort == 0
-    int32_t goal_cmd_pos_offset = 255;  // Needed so that it never reaches the original goal
+
+    // TODO remove when fixed in MTC
+    int32_t goal_cmd_pos_offset = 5;  // Needed so that it never reaches the original goal
+    // TODO uncomment when fixed in MTC
+    //int32_t goal_cmd_pos_offset = 255;  // Needed so that it never reaches the original goal
 
     // Tolerance for position so that a GripperCommand succeeds (Used in fc & pc)
-    uint16_t pos_tol_high = 5;
-    uint16_t pos_tol_low  = 2;
+    // TODO change to default values when fixed in MTC
+    uint16_t pos_tol_high = 25;	// default:5
+    uint16_t pos_tol_low  = 25;  // default:2
 
     // Closing gripper
     if (curr_reg_state_gPO <= result.rPR) {
@@ -242,11 +251,11 @@ void Robotiq2FGripperActionServer::analysisCB(const GripperInput::ConstPtr& msg)
   {
     // If commanded to move and if at a goal state and if the position request matches the echo'd PR, we're
     // done with a move
-/*
+
     ROS_INFO("gPO = %d", current_reg_state_.gPO);
     ROS_INFO("rPR = %d", goal_reg_state_.rPR );
     ROS_INFO("pos_offset = %d", gripper_params_.pos_offset );
-*/
+
     // TODO change because we have 3 functions depending on the position
     double max_tol = ((goal_reg_state_.rPR - gripper_params_.pos_offset + gripper_params_.pos_nl_offset - gripper_params_.pos_tol_closed)-228.260379) /-1526.308005;
     double min_tol = ((goal_reg_state_.rPR - gripper_params_.pos_offset + gripper_params_.pos_nl_offset + gripper_params_.pos_tol_open)-228.260379) /-1526.308005;
@@ -256,10 +265,10 @@ void Robotiq2FGripperActionServer::analysisCB(const GripperInput::ConstPtr& msg)
     if (static_cast<int16_t>(current_reg_state_.gPO) >= (static_cast<int16_t>(goal_reg_state_.rPR) - gripper_params_.pos_offset + gripper_params_.pos_nl_offset - gripper_params_.pos_tol_closed) && 
         static_cast<int16_t>(current_reg_state_.gPO) <= (static_cast<int16_t>(goal_reg_state_.rPR) - gripper_params_.pos_offset + gripper_params_.pos_nl_offset + gripper_params_.pos_tol_open))  
     {
-/*
+
       ROS_INFO("%s succeeded", action_name_.c_str());
       ROS_INFO("Gripper is between %f and %f meters. Current position is %f meters.", min_tol, max_tol, curr_pos);
-*/
+
       as_.setSucceeded(registerStateToResult(current_reg_state_,
                                              gripper_params_,
                                              goal_reg_state_.rPR));
