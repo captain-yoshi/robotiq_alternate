@@ -195,7 +195,7 @@
     <parent link="${prefix}base_link" />
     <child link="${prefix}left_outer_knuckle" />
     <axis xyz="0 0 1" />
-    <limit lower="0" upper="0.792" velocity="2.0" effort="176" />
+    <limit lower="0" upper="0.786522656" velocity="2.0" effort="176" />
   </joint>
 </xacro:macro>
 
