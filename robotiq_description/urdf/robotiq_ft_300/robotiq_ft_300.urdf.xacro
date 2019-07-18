@@ -44,8 +44,13 @@
   </joint>
 
 
+  <link name="${prefix}reference_frame" />
 
-
+  <joint name="${prefix}reference_frame_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}" />
+    <parent link="${prefix}top_link" />
+    <child link="${prefix}reference_frame" />
+  </joint>
 
 </xacro:macro>
 </robot>
