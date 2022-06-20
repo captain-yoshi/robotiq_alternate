@@ -1175,8 +1175,8 @@ void stop_connection()
  */
 static UINT_8 rq_com_identify_device(INT_8 const * const d_name)
 {
-	INT_8 dirParent[20] = {0};
-	INT_8 port_com[15] = {0};
+	INT_8 dirParent[25] = {0};
+	INT_8 port_com[25] = {0};
 
 	strcpy(dirParent, "/dev/");
 	strcat(dirParent, d_name);

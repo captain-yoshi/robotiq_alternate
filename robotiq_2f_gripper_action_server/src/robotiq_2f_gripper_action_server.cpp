@@ -66,23 +66,26 @@ namespace
     double eff_per_tick = (params.max_effort_ - params.min_effort_) / 255;
 
     // TODO remove when fixed in MTC
-    result.rFR = static_cast<uint8_t>((50 - params.min_effort_) / eff_per_tick);
+    //result.rFR = static_cast<uint8_t>((50 - params.min_effort_) / eff_per_tick);
     // TODO uncomment when fixed in MTC
-    //result.rFR = static_cast<uint8_t>((goal.command.max_effort - params.min_effort_) / eff_per_tick);
+    result.rFR = static_cast<uint8_t>((goal.command.max_effort - params.min_effort_) / eff_per_tick);
 
 
     // In force control (fc) when goal.command.max_effort > 0
     // In position control (pc) when goal.command.max_effort == 0
 
     // TODO remove when fixed in MTC
-    int32_t goal_cmd_pos_offset = 5;  // Needed so that it never reaches the original goal
+    //int32_t goal_cmd_pos_offset = 0;  // Needed so that it never reaches the original goal
     // TODO uncomment when fixed in MTC
-    //int32_t goal_cmd_pos_offset = 255;  // Needed so that it never reaches the original goal
+    int32_t goal_cmd_pos_offset = 255;  // Needed so that it never reaches the original goal
 
     // Tolerance for position so that a GripperCommand succeeds (Used in fc & pc)
-    // TODO change to default values when fixed in MTC
-    uint16_t pos_tol_high = 25;	// default:5
-    uint16_t pos_tol_low  = 25;  // default:2
+    // TODO remove when fixed in MTC
+    //uint16_t pos_tol_high = 25;	
+    //uint16_t pos_tol_low  = 25;  
+    //TODO uncomment when fixed in MTC
+    uint16_t pos_tol_high = 5;	// default:5
+    uint16_t pos_tol_low  = 2;  // default:2
 
     // Closing gripper
     if (curr_reg_state_gPO <= result.rPR) {
@@ -221,7 +224,6 @@ void Robotiq2FGripperActionServer::preemptCB()
 void Robotiq2FGripperActionServer::analysisCB(const GripperInput::ConstPtr& msg)
 {
   current_reg_state_ = *msg;
-
   if (!as_.isActive()) return;
 
   // Check to see if the gripper is in its activated state
@@ -276,7 +278,7 @@ void Robotiq2FGripperActionServer::analysisCB(const GripperInput::ConstPtr& msg)
     // Throw error because
     else {
       ROS_WARN("gPO = %d, rPR = %d, Compare1 = %d, Compare2 = %d", current_reg_state_.gPO, goal_reg_state_.rPR, (goal_reg_state_.rPR - gripper_params_.pos_offset + gripper_params_.pos_nl_offset - gripper_params_.pos_tol_closed), (goal_reg_state_.rPR - gripper_params_.pos_offset + gripper_params_.pos_nl_offset + gripper_params_.pos_tol_open));
-      ROS_WARN("Gripper position MUST be between %f and %f meters. Current position is %f meters.", min_tol, max_tol, curr_pos);
+      ROS_WARN("Error: Gripper position MUST be between %f and %f meters. Current position is %f meters.", min_tol, max_tol, curr_pos);
       as_.setAborted(registerStateToResult(current_reg_state_,
                                            gripper_params_,
                                            goal_reg_state_.rPR));

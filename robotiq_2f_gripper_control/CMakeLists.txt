@@ -7,7 +7,11 @@ project(robotiq_2f_gripper_control)
 find_package(catkin REQUIRED COMPONENTS roscpp rospy message_generation )
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/")
-find_package(Modbus REQUIRED)
+#find_package(Modbus REQUIRED)
+
+set(MODBUS_INCLUDE_DIR /usr/include/modbus)
+set(MODBUS_LIBRARIES /usr/lib/x86_64-linux-gnu/libmodbus.so)
+  
 
 #set the default path for built executables to the "bin" directory
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
@@ -40,7 +44,7 @@ generate_messages()
 catkin_package(
     CATKIN_DEPENDS rospy message_runtime roscpp
     INCLUDE_DIRS include
-    DEPENDS modbus
+    #DEPENDS modbus
 )
 
 include_directories(include)

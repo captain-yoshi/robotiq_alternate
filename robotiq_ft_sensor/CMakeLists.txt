@@ -50,11 +50,17 @@ add_executable(rq_sensor nodes/rq_sensor.cpp src/rq_sensor_com.cpp src/rq_sensor
 add_dependencies(rq_sensor ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg ${PROJECT_NAME}_gencpp)
 target_link_libraries(rq_sensor ${catkin_LIBRARIES})
 
+add_executable(rq_reset_sensor nodes/rq_reset_sensor.cpp)
+add_dependencies(rq_reset_sensor ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg ${PROJECT_NAME}_gencpp)
+target_link_libraries(rq_reset_sensor ${catkin_LIBRARIES})
+
+
+
 add_executable(rq_test_sensor nodes/rq_test_sensor.cpp)
 add_dependencies(rq_test_sensor ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg ${PROJECT_NAME}_gencpp)
 target_link_libraries(rq_test_sensor ${catkin_LIBRARIES})
 
-install(TARGETS rq_sensor rq_test_sensor
+install(TARGETS rq_sensor rq_test_sensor rq_reset_sensor
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
